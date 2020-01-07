@@ -4,10 +4,10 @@ import FeedWedge from "./components/FeedWedge/";
 
 function App() {
 
-    let farm_walk = [{ name: '1', value: 3500 }, 
-                 { name: '2', value: 3200 },
-                 { name: '3', value: 3000 },
-                 { name: '4', value: 2800 },
+    let farm_walk = [{ name: '1', cover: 3500 }, 
+                 { name: '2', cover: 3200 },
+                 { name: '3', cover: 3000 },
+                 { name: '4', cover: 2800 },
                  ];
 
     let growth = 100;
