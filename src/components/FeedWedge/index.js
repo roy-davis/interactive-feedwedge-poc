@@ -19,94 +19,148 @@ class FeedWedge extends React.Component {
 	componentDidMount(){
 
 		this.setState({
-			histogram_width: this.props.covers.length * 32,
+			histogram_width: (this.props.covers.length * 40) + 16,
 			histogram_container_width: this.histogram_container.current.offsetWidth,
 		});
 	}
 
+	componentDidUpdate(props){
 
+	}
 
 
 	sliderController(e) {
 		e.preventDefault();
-		let container = this.histogram_container.current;
-		let total = (container.scrollWidth - container.offsetWidth);
-		let percentage = total*(e.target.value/100);
+		const container = this.histogram_container.current;
+		const total = (container.scrollWidth - container.offsetWidth);
+		const percentage = total*(e.target.value/100);
 		container.scrollLeft = percentage;
 
 
 	}
 
+	sortPaddocks (a, b) {
+		if (a.cover > b.cover) {
+			return -1;
+		}
+		if (b.cover > a.cover) {
+			return 1;
+		}
+		return 0;
+	}
+
 	render() {
 
-		let histogram_bar_width = 24;
-		let histogram_bar_padding = 8;
-
-
-		let histogram_residual_bars = [];
-		let histogram_cover_bars = [];
-		let mini_map_cover = [];
-		let mini_map_residual = [];
-
+		let paddocks = JSON.parse(JSON.stringify(this.props.covers));
 		
+		paddocks.sort(this.sortPaddocks);
+
+		if (this.props.estimate_comsumption) {
+			const total_ha = this.props.grazing_rate * this.props.days;
+			let ha_tally = 0;
+			for (let i = 0; i < paddocks.length; i++) {
+				let entry = paddocks[i];
+				if (ha_tally < total_ha) {
+					ha_tally += paddocks[i].ha;
+					paddocks[i].cover = this.props.post;
+				} 
+			}
+			paddocks.sort(this.sortPaddocks);
+		}
+
+
+		const histogram_growth_bars = [];
+		const histogram_residual_bars = [];
+		const histogram_cover_bars = [];
+		const mini_map_cover = [];
+		const mini_map_growth = [];
+		const mini_map_residual = [];
+
+
+		const histogram_bar_width = 24;
+		const histogram_bar_padding = 8;
+
 		let apc_tally = 0;
 
 		
 		let histogram_x = histogram_bar_padding * 2;
-		let	target_start = 192 - (this.props.pre/32);
-		let	target_end = 192 - (this.props.post/32);
 
-		let	histogram_bar_spacing = (histogram_bar_padding * 2) + histogram_bar_width;
-			
-		let	histogram_residual = this.props.post/32;
+		const	target_start = 192 - (this.props.pre/32);
+		const	target_end = 192 - (this.props.post/32);
 
-		
-		let	minimap_chunks = ((this.state.histogram_container_width - 16 )/this.props.covers.length);
+		const	histogram_bar_spacing = (histogram_bar_padding * 2) + histogram_bar_width;
+		const	histogram_residual = this.props.post/32;
 
-		
-		let minimap_spacing = minimap_chunks / 3 ;
+		const	minimap_chunks = ((this.state.histogram_container_width - 16 )/paddocks.length);
+		const minimap_spacing = minimap_chunks / 3 ;
 		let minimap_x = 10;
-		let minimap_width = minimap_spacing * 2;
-		
-		let	minimap_residual = (this.props.post)/96;
+		const minimap_width = minimap_spacing * 2;
+		const	minimap_residual = (this.props.post)/96;
+		const	slider_handle_width = (this.state.histogram_container_width / histogram_bar_spacing) * (minimap_chunks);
 
-		let	slider_handle_width = (this.state.histogram_container_width / histogram_bar_spacing) * (minimap_chunks);
+		let growth = null;
 
-
-		for (let i = 0; i < this.props.covers.length; i++) {
+		for (let i = 0; i < paddocks.length; i++) {
 	
 			// main histogram
-			apc_tally += this.props.covers[i].cover;
-			let available = (this.props.covers[i].cover)/32;
+			apc_tally += paddocks[i].cover;
+			let available = (paddocks[i].cover)/32;
 			let avail_y = 192 - available;
 			histogram_cover_bars.push(
-				<rect x={histogram_x} y={avail_y} className="fw_bar_available" width={histogram_bar_width} height={available} key={this.props.covers[i].name} data-name={this.props.covers[i].name} data-cover={this.props.covers[i].cover} />
+				<rect x={histogram_x} y={avail_y} className="fw_bar_available" width={histogram_bar_width} height={available} key={paddocks[i].name} data-name={paddocks[i].name} data-cover={paddocks[i].cover} />
 			)
 
+			if (this.props.show_growth) {
+				growth = ((this.props.growth * this.props.days) + paddocks[i].cover)/32;
+				avail_y = 192 - growth;
+				histogram_growth_bars.push(
+					<rect x={histogram_x} y={avail_y} className="fw_bar_predicted" width={histogram_bar_width} height={growth} key={paddocks[i].name + "_predicted"} data-name={paddocks[i].name} data-cover={paddocks[i].cover} />
+				)
+			}
+
+
 			// residual bars
-			avail_y = 192 - histogram_residual;
+			let residual_height =  (paddocks[i].cover < this.props.post) ?  available : histogram_residual;
+			const residual_colour =  (paddocks[i].cover < this.props.post) ?  'fw_bar_residual_danger' : 'fw_bar_residual';
+
+			avail_y = 192 - residual_height;
 			histogram_residual_bars.push(
-				<rect x={histogram_x} y={avail_y} className="fw_bar_residual" width={histogram_bar_width} height={histogram_residual} key={this.props.covers[i].name + "_residual"} data-name={this.props.covers[i].name} data-cover={this.props.post} />
+				<rect x={histogram_x} y={avail_y} className={residual_colour} width={histogram_bar_width} height={residual_height} key={paddocks[i].name + "_residual"} data-name={paddocks[i].name} data-cover={this.props.post} />
 			)
 			histogram_x += histogram_bar_spacing;
 
 			// minimap histogram
-			available = (this.props.covers[i].cover)/96;
+			available = (paddocks[i].cover)/96;
 			avail_y = 40 - available;
 			mini_map_cover.push(
-				<rect x={minimap_x} y={avail_y} className="fw_bar_available" width={minimap_width} height={available}  data-name={this.props.covers[i].name} data-cover={this.props.covers[i].cover} key={this.props.covers[i].name + "_minimap"} />
+				<rect x={minimap_x} y={avail_y} className="fw_bar_available" width={minimap_width} height={available}  data-name={paddocks[i].name} data-cover={paddocks[i].cover} key={paddocks[i].name + "_minimap"} />
 			)
 
+			if (this.props.show_growth) {
+				growth = ((this.props.growth * this.props.days) + paddocks[i].cover)/96;
+				avail_y = 40 - growth;
+				mini_map_growth.push(
+					<rect x={minimap_x} y={avail_y} className="fw_bar_predicted" width={minimap_width} height={available}  data-name={paddocks[i].name} data-cover={paddocks[i].cover} key={paddocks[i].name + "_predicted_minimap" } />
+				)
+			}
+
+			residual_height =  (paddocks[i].cover < this.props.post) ?  available : minimap_residual;
+			avail_y = 40 - residual_height;
 			mini_map_residual.push(
-				<rect x={minimap_x} y={25} className="fw_bar_residual" width={minimap_width} height={minimap_residual}  data-name={this.props.covers[i].name} data-cover={this.props.covers[i].cover} key={this.props.covers[i].name + "_residual_minimap"} />
+				<rect x={minimap_x} y={avail_y} className={residual_colour} width={minimap_width} height={residual_height}  data-name={paddocks[i].name} data-cover={paddocks[i].cover} key={paddocks[i].name + "_residual_minimap"} />
 			)
 			minimap_x += (minimap_spacing + minimap_width);
 
 		}	
 
-		let apc = apc_tally/this.props.covers.length;
-		let target_line = <line className="fw_target" x1="4" y1={target_start} x2={this.state.histogram_width} y2={target_end} strokeWidth="2" />;
-		let histogram_viewbox= "0 0 " + this.state.histogram_width + " 224";
+		const apc = apc_tally/paddocks.length;
+
+		let target_line = null;
+		if( this.props.show_target) {
+			target_line = <line className="fw_target" x1="4" y1={target_start} x2={this.state.histogram_width - 8} y2={target_end} strokeWidth="2" />;
+		}
+		
+		const histogram_viewbox= "0 0 " + this.state.histogram_width + " 224";
 
 		return (
 			<div className="fw_container">
@@ -142,6 +196,7 @@ class FeedWedge extends React.Component {
 					<ul className="fw_legend">
 						<li><div className="fw_legend_residual fw_legend_icon"></div>Residual</li>
 						<li><div className="fw_legend_available fw_legend_icon"></div>Available</li>
+						<li><div className="fw_legend_residual_danger fw_legend_icon"></div>Over Grazed</li>
 						<li><div className="fw_legend_predicted fw_legend_icon"></div>Predicted Growth</li>
 					</ul>
 
@@ -161,6 +216,7 @@ class FeedWedge extends React.Component {
 
 						<line className="st0" x1={this.state.histogram_width} y1="32" x2={this.state.histogram_width} y2="192"/>
 
+						{histogram_growth_bars}
 						{histogram_cover_bars}
 						{histogram_residual_bars}
 						{target_line}
@@ -179,6 +235,7 @@ class FeedWedge extends React.Component {
 					<svg className="fw_minimap_view"
 						version="1.1" 
 						xmlns="http://www.w3.org/2000/svg" >
+						{mini_map_growth}
 						{mini_map_cover}
 						{mini_map_residual}
 					</svg>

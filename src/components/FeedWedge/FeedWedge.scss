@@ -42,14 +42,14 @@ body {font-family:'BoosterNextFY-Regular';}
 		font-size: 12px;
 		z-index: 10;
 		li { display: inline-block; padding: 0 1em 0 1em; }
-		&_residual { background-color: #82CCEC; }
+		&_residual { background-color: #82CCEC; &_danger { background-color: red;}}
 		&_available { background-color: #1498D8; }
 		&_predicted { background-color: pink; }
 		&_icon { width: 0.75em; height: 0.75em; display: inline-block; margin-right: 0.5em; border-radius: 50%; }
 	}
 
 
-	&_bar_residual { fill: lightblue; }
+	&_bar_residual { fill: lightblue; &_danger { fill: red;}}
 	&_bar_available { fill: blue; }
 	&_bar_predicted { fill: pink; }
 
