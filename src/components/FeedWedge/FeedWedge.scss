@@ -27,7 +27,7 @@ body {font-family:'BoosterNextFY-Regular';}
 		}
 		rect { cursor: pointer; }
 		h5{ position: absolute; top: 2px; left: 330px; } 
-		h6 { position: absolute; top: 170px; left: 400px; font-weight: normal; } 
+		h6 { position: absolute; top: 170px; left: 400px; font-weight: normal; display: none; } 
 	}
 	&_minimap { grid-area: 2 / 1 / 2 / 4; padding-left: 6em; }
 	&_target{ stroke: orange; }

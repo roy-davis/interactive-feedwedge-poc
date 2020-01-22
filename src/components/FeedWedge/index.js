@@ -75,6 +75,7 @@ class FeedWedge extends React.Component {
 		const mini_map_cover = [];
 		const mini_map_growth = [];
 		const mini_map_residual = [];
+		const paddock_labels = [];
 
 
 		const histogram_bar_width = 24;
@@ -119,6 +120,10 @@ class FeedWedge extends React.Component {
 			}
 
 
+			paddock_labels.push(
+				<text transform= { `matrix(6.123234e-17 -1 1 6.123234e-17 ${ histogram_x + 16 } 218) ` } className="st3 st4">{paddocks[i].name}</text>
+			)
+
 			// residual bars
 			let residual_height =  (paddocks[i].cover < this.props.post) ?  available : histogram_residual;
 			const residual_colour =  (paddocks[i].cover < this.props.post) ?  'fw_bar_residual_danger' : 'fw_bar_residual';
@@ -128,6 +133,8 @@ class FeedWedge extends React.Component {
 				<rect x={histogram_x} y={avail_y} className={residual_colour} width={histogram_bar_width} height={residual_height} key={paddocks[i].name + "_residual"} data-name={paddocks[i].name} data-cover={this.props.post} />
 			)
 			histogram_x += histogram_bar_spacing;
+
+
 
 			// minimap histogram
 			available = (paddocks[i].cover)/96;
@@ -220,7 +227,7 @@ class FeedWedge extends React.Component {
 						{histogram_cover_bars}
 						{histogram_residual_bars}
 						{target_line}
-
+						{paddock_labels}
 						<line className="st0" x1="0" y1="192" x2={this.state.histogram_width} y2="192"/>
 
 					</svg>
